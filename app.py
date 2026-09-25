@@ -504,7 +504,7 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     language = st.selectbox("Transcript language", ["english", "hinglish"], index=0)
-    run_btn = st.button("Analyze meeting", type="primary", use_container_width=True)
+    run_btn = st.button("Analyse", type="primary", use_container_width=True)
     st.markdown('<p class="sidebar-note">Paste a YouTube link or upload an audio/video file.</p>', unsafe_allow_html=True)
     pipeline_status_placeholder = st.empty()
 
