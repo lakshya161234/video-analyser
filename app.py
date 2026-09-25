@@ -38,7 +38,7 @@ for _secret_name in (
         if _secret_value:
             os.environ[_secret_name] = str(_secret_value)
 
-from utils.audio_processor import process_input
+from utils.audio_processor import cleanup_input_chunks, process_input
 from core.transcriber import transcribe_all
 from core.summarizer import summarize, generate_title
 from core.extractor import extract_meeting_insights
@@ -605,13 +605,10 @@ if run_btn:
             st.session_state.processing = False
             progress_placeholder.error(display_error(e))
         finally:
-            for chunk_path in chunks:
-                Path(chunk_path).unlink(missing_ok=True)
+            cleanup_input_chunks(chunks)
             if uploaded_path:
                 uploaded_media = Path(uploaded_path)
-                converted_media = uploaded_media.with_name(f"{uploaded_media.stem}_converted.wav")
                 uploaded_media.unlink(missing_ok=True)
-                converted_media.unlink(missing_ok=True)
 
                                                                                    
 if st.session_state.result:

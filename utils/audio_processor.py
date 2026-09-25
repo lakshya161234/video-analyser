@@ -1,7 +1,9 @@
 import os
+import shutil
 import subprocess
 import tempfile
 import warnings
+from pathlib import Path
 import yt_dlp
 import imageio_ffmpeg
 
@@ -25,11 +27,8 @@ from pydub import AudioSegment
 
 AudioSegment.converter = FFMPEG_PATH
 
-DOWNLOAD_DIR = 'downloades'
-os.makedirs(DOWNLOAD_DIR,exist_ok = True)
-
-def download_youtube_audio(url :str) ->str:
-    output_path = os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s")
+def download_youtube_audio(url: str, work_dir: str) -> str:
+    output_path = os.path.join(work_dir, "recording.%(ext)s")
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": output_path,
@@ -44,18 +43,20 @@ def download_youtube_audio(url :str) ->str:
         "quiet": True,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info).replace(".webm", ".wav").replace(".m4a", ".wav")
-    return filename
+        ydl.extract_info(url, download=True)
+    wav_files = list(Path(work_dir).glob("*.wav"))
+    if not wav_files:
+        raise FileNotFoundError("YouTube audio download did not produce a WAV file.")
+    return str(wav_files[0])
 
 
 
-def convert_to_wav(input_path: str) -> str:
+def convert_to_wav(input_path: str, work_dir: str) -> str:
     """Convert audio or video to mono 16 kHz WAV."""
     if not os.path.isfile(input_path):
         raise FileNotFoundError(f"Input file not found: {input_path}")
 
-    output_path = os.path.splitext(input_path)[0] + "_converted.wav"
+    output_path = os.path.join(work_dir, "converted.wav")
     result = subprocess.run(
         [
             FFMPEG_PATH,
@@ -100,18 +101,36 @@ def chunk_audio(wav_path : str , chunk_minutes : int = 10) -> list:
     return chunks
 
 def process_input(source: str) -> list:
-    if source.startswith("http://") or source.startswith("https://"):
-        print("Detected YouTube URL. Downloading audio...")
-        wav_path = download_youtube_audio(source)
-    else:
-        print("Detected local file. Converting to WAV...")
-        wav_path = convert_to_wav(source)
-
+    work_dir = tempfile.mkdtemp(prefix="clipmind-audio-")
     try:
+        if source.startswith("http://") or source.startswith("https://"):
+            print("Detected YouTube URL. Downloading audio...")
+            wav_path = download_youtube_audio(source, work_dir)
+        else:
+            print("Detected local file. Converting to WAV...")
+            wav_path = convert_to_wav(source, work_dir)
+
         print("Chunking audio...")
         chunks = chunk_audio(wav_path)
         print(f"Audio ready — {len(chunks)} chunk(s) created.")
+        chunk_paths = {os.path.abspath(path) for path in chunks}
+        for item in Path(work_dir).iterdir():
+            if item.is_file() and str(item.resolve()) not in chunk_paths:
+                item.unlink(missing_ok=True)
         return chunks
-    finally:
-        if os.path.exists(wav_path):
-            os.remove(wav_path)
+    except Exception:
+        shutil.rmtree(work_dir, ignore_errors=True)
+        raise
+
+
+def cleanup_input_chunks(chunks: list) -> None:
+    """Remove chunk files and their per-analysis temporary directory."""
+    work_dirs = set()
+    for chunk_path in chunks:
+        path = Path(chunk_path)
+        work_dirs.add(path.parent)
+        path.unlink(missing_ok=True)
+
+    for work_dir in work_dirs:
+        if work_dir.name.startswith("clipmind-audio-"):
+            shutil.rmtree(work_dir, ignore_errors=True)
