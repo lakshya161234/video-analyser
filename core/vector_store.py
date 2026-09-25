@@ -18,11 +18,22 @@ def get_embeddings():
 def build_vector_store(transcript : str)->Chroma:
     print("Building vector Store")
 
+    if not isinstance(transcript, str) or not transcript.strip():
+        raise ValueError(
+            "The transcript is empty, so ClipMind cannot prepare meeting chat. "
+            "Check that the recording contains audible speech and try again."
+        )
+
     splitter = RecursiveCharacterTextSplitter(
         chunk_size = 500,
         chunk_overlap = 50
     )
     chunks = splitter.split_text(transcript)
+    if not chunks:
+        raise ValueError(
+            "No transcript text was available to prepare meeting chat. "
+            "Check that the recording contains audible speech and try again."
+        )
 
     docs = [
         Document(page_content=chunk, metadata = {'chunk_index' : i})

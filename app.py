@@ -541,6 +541,11 @@ if run_btn:
 
             update_step("transcript", "active")
             transcript = transcribe_all(chunks, language)
+            if not transcript or not transcript.strip():
+                raise ValueError(
+                    "No speech was detected in the recording. Check that it has "
+                    "clear audible speech, then try another recording."
+                )
             update_step("transcript", "done")
 
             update_step("title", "active")
