@@ -1,5 +1,6 @@
 yt-dlp>=2024.4.9
 pydub>=0.25.1
+audioop-lts>=0.2.2; python_version >= "3.13"
 imageio-ffmpeg>=0.6.0
 openai-whisper>=20231117
 torch>=2.2.0

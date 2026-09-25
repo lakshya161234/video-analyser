@@ -28,6 +28,7 @@ ClipMind can be deployed on Streamlit Community Cloud from this GitHub repositor
 ## Runtime notes
 
 - English transcription runs OpenAI Whisper locally. Its default model is `small`; on a memory-limited host, set `WHISPER_MODEL = "base"` or `"tiny"` in the host secrets. Smaller models use fewer resources but may be less accurate.
+- Python 3.13 and newer remove the standard-library `audioop` module; `requirements.txt` adds `audioop-lts` on those versions so pydub can load.
 - Hinglish transcription uses Sarvam's API and requires `SARVAM_API_KEY`.
 - YouTube processing requires the host to allow outbound access to YouTube. Uploaded recordings are also supported.
 - Uploaded media and intermediate audio are temporary. Meeting results live in the active app session and are not saved as a user library.
