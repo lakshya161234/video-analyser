@@ -189,6 +189,17 @@ p, li { line-height: 1.7; }
 }
 .brand-logo { width: 2.35rem; height: 2.35rem; flex: 0 0 2.35rem; }
 .sidebar-note { color: var(--muted); font-size: .83rem; line-height: 1.55; }
+.youtube-note {
+    margin: .5rem 0 .7rem;
+    padding: .7rem .8rem;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    background: var(--surface-muted);
+    color: var(--muted);
+    font-size: .78rem;
+    line-height: 1.5;
+}
+.youtube-note strong { display: block; margin-bottom: .2rem; color: var(--ink); }
 .section-label {
     color: var(--muted);
     font-size: .7rem;
@@ -485,6 +496,12 @@ with st.sidebar:
     uploaded_recording = st.file_uploader(
         "Or upload a recording",
         type=["mp3", "mp4", "wav", "m4a", "mpeg", "mpga", "webm", "mov", "avi", "mkv"],
+    )
+    st.markdown(
+        '<div class="youtube-note"><strong>YouTube availability</strong>'
+        'YouTube may block downloads from hosted servers. If a link cannot be '
+        'processed, upload the audio or video file instead.</div>',
+        unsafe_allow_html=True,
     )
     language = st.selectbox("Transcript language", ["english", "hinglish"], index=0)
     run_btn = st.button("Analyze meeting", type="primary", use_container_width=True)
