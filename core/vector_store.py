@@ -1,4 +1,5 @@
 import os 
+import uuid
 from langchain_chroma import Chroma 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -32,8 +33,7 @@ def build_vector_store(transcript : str)->Chroma:
     vector_store = Chroma.from_documents(
         documents= docs,
         embedding=embeddings,
-        collection_name=COLLECTION_NAME,
-        persist_directory=CHROMA_DIR
+        collection_name=f"meeting_{uuid.uuid4().hex}",
     )
 
     return vector_store
@@ -55,4 +55,3 @@ def get_retriever(vector_store : Chroma, k :int = 4):
         search_type = 'similarity',
         search_kwargs = {"k":k}
     )
-

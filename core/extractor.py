@@ -1,12 +1,20 @@
                                         
 
 import json
+import os
 import re
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from pydantic import BaseModel, Field
 from core.llm import get_llm
+
+
+class MeetingInsights(BaseModel):
+    action_items: str = Field(description="Numbered action items, with owner and deadline when known")
+    key_decisions: str = Field(description="Numbered list of decisions made in the meeting")
+    open_questions: str = Field(description="Numbered unresolved questions and follow-up topics")
 
 
 def build_chain(system_prompt : str):
@@ -51,6 +59,24 @@ def extract_questions(transcript: str) -> str:
 
 def extract_meeting_insights(transcript: str) -> dict[str, str]:
     llm = get_llm(temperature=0.2)
+    if os.getenv("LLM_PROVIDER", "mistral").strip().lower() == "groq":
+        structured_llm = llm.with_structured_output(
+            MeetingInsights,
+            method="json_schema",
+            strict=True,
+        )
+        insights = structured_llm.invoke([
+            (
+                "system",
+                "Analyze this meeting transcript. Include only information stated or "
+                "clearly implied in the transcript. Use concise numbered lists. "
+                "For empty categories, say that none were identified.",
+            ),
+            ("human", transcript),
+        ])
+        result = insights.model_dump() if isinstance(insights, MeetingInsights) else insights
+        return _normalize_meeting_insights(result)
+
     prompt = ChatPromptTemplate.from_messages([
         (
             "system",
@@ -98,6 +124,14 @@ def extract_meeting_insights(transcript: str) -> dict[str, str]:
                 )
             result = json.loads(raw_result[start:end + 1])
 
+    if not isinstance(result, dict) or any(field not in result for field in required_fields):
+        raise ValueError("The model response is missing one or more meeting insight sections.")
+
+    return _normalize_meeting_insights(result)
+
+
+def _normalize_meeting_insights(result: dict) -> dict[str, str]:
+    required_fields = ("action_items", "key_decisions", "open_questions")
     if not isinstance(result, dict) or any(field not in result for field in required_fields):
         raise ValueError("The model response is missing one or more meeting insight sections.")
 

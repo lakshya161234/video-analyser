@@ -1,16 +1,10 @@
 import os
 import subprocess
-import sys
 import warnings
 import yt_dlp
 import imageio_ffmpeg
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
-BIN_DIR = os.path.dirname(sys.executable)
-FFMPEG_COMMAND = os.path.join(BIN_DIR, "ffmpeg")
-if not os.path.exists(FFMPEG_COMMAND):
-    os.symlink(FFMPEG_PATH, FFMPEG_COMMAND)
-os.environ["PATH"] = BIN_DIR + os.pathsep + os.environ.get("PATH", "")
 
 warnings.filterwarnings(
     "ignore",
@@ -104,7 +98,11 @@ def process_input(source: str) -> list:
         print("Detected local file. Converting to WAV...")
         wav_path = convert_to_wav(source)
 
-    print("Chunking audio...")
-    chunks = chunk_audio(wav_path)
-    print(f"Audio ready — {len(chunks)} chunk(s) created.")
-    return chunks
+    try:
+        print("Chunking audio...")
+        chunks = chunk_audio(wav_path)
+        print(f"Audio ready — {len(chunks)} chunk(s) created.")
+        return chunks
+    finally:
+        if os.path.exists(wav_path):
+            os.remove(wav_path)
