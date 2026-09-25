@@ -1,10 +1,19 @@
 import os
 import subprocess
+import tempfile
 import warnings
 import yt_dlp
 import imageio_ffmpeg
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
+FFMPEG_BIN_DIR = os.path.join(tempfile.gettempdir(), "clipmind-ffmpeg")
+os.makedirs(FFMPEG_BIN_DIR, exist_ok=True)
+FFMPEG_COMMAND = os.path.join(FFMPEG_BIN_DIR, "ffmpeg")
+if os.path.islink(FFMPEG_COMMAND) and os.path.realpath(FFMPEG_COMMAND) != os.path.realpath(FFMPEG_PATH):
+    os.unlink(FFMPEG_COMMAND)
+if not os.path.exists(FFMPEG_COMMAND):
+    os.symlink(FFMPEG_PATH, FFMPEG_COMMAND)
+os.environ["PATH"] = FFMPEG_BIN_DIR + os.pathsep + os.environ.get("PATH", "")
 
 warnings.filterwarnings(
     "ignore",
