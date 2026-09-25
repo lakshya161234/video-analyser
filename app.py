@@ -46,6 +46,14 @@ from core.rag_engine import build_rag_chain, ask_question
 
 
 def display_error(error: Exception) -> str:
+    error_text = str(error)
+    if "http error 403: forbidden" in error_text.lower() and "download" in error_text.lower():
+        return (
+            "YouTube refused the media download (HTTP 403). This can happen when its "
+            "network restrictions block the app's cloud host. Upload the audio/video "
+            "file instead, or run ClipMind locally to download from your own network."
+        )
+
     response = getattr(error, "response", None)
     status_code = getattr(response, "status_code", getattr(error, "code", None))
     provider = os.getenv("LLM_PROVIDER", "mistral").strip().lower()
@@ -82,7 +90,7 @@ def display_error(error: Exception) -> str:
         }
         key_name = key_names.get(provider, "API key")
         return f"{provider_name} rejected the API key. Check {key_name} in app secrets or environment settings, then restart the app."
-    return f"{type(error).__name__}: {error}"
+    return f"{type(error).__name__}: {error_text}"
 
                                                                                   
 
