@@ -12,7 +12,7 @@ ClipMind can be deployed on Streamlit Community Cloud from this GitHub repositor
 
 1. Sign in at [share.streamlit.io](https://share.streamlit.io/) and choose **Create app**.
 2. Select this repository, its branch, and `app.py` as the app file.
-3. In **Advanced settings**, select Python 3.11.
+3. In **Advanced settings**, select Python 3.11 for the broadest dependency compatibility. The current requirements also pin a Python 3.14-compatible Streamlit/PyArrow combination if Community Cloud selects 3.14.
 4. Add secrets using `.streamlit/secrets.toml.example` as a template. Replace the example values with real keys. For example:
 
    ```toml
